@@ -1,0 +1,19 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>test</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">test</ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-grid>
+    <ion-row>
+      <ion-col><ion-input [(ngModel)]="text" label="Text"></ion-input></ion-col>
+      <ion-col><ion-button (click)="send()">Send</ion-button></ion-col>
+    </ion-row>
+  </ion-grid>
+</ion-content>
