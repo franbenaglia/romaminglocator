@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonSpinner, IonPopover, IonInput, IonToast } from '@ionic/angular/standalone';
@@ -11,6 +11,7 @@ import { PubsubService } from '../services/pubsub.service';
 import { AuthService } from '../services/auth.service';
 import { User } from '../model/User';
 import { StatsService } from '../services/stats.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-map',
@@ -19,7 +20,7 @@ import { StatsService } from '../services/stats.service';
   standalone: true,
   imports: [IonToast, IonInput, IonPopover, IonSpinner, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
-export class MapPage implements OnInit {
+export class MapPage implements OnInit, OnDestroy {
 
   constructor(private stats: StatsService, private auth: AuthService, private pubsub: PubsubService, private geolocService: GpslocatorService, private coordMockService: EventCoordService) { }
 
@@ -28,6 +29,11 @@ export class MapPage implements OnInit {
   private iconColorCount: Map<string, number> = new Map<string, number>();
 
   private availableColors: string[] = ['red', 'black', 'blue'];
+
+  subscriptionGeo: Subscription;
+  susbcriptionMock: Subscription;
+  subscriptionCEvent: Subscription;
+  subscriptionGeoCheck: Subscription;
 
   ngOnInit() {
 
@@ -56,7 +62,7 @@ export class MapPage implements OnInit {
 
   private position(): void {
 
-    this.geolocService.getCurrentPosition().subscribe(position => {
+    this.subscriptionGeo = this.geolocService.getCurrentPosition().subscribe(position => {
 
       this.lat = position.coords.latitude;
       this.lng = position.coords.longitude;
@@ -73,7 +79,7 @@ export class MapPage implements OnInit {
   private mockPosition(lat?: number, ln?: number, gap?: number): void {
     //let gap: number = this.coordMockService.getGap(0.0025, 0.0009);
     //let c : Coordinate = this.coordMockService.getRandomCoords(lat,ln, max, min); // c.lat, c.ln
-    this.coordMockService.getCoordsMockEvent(lat, ln, gap).subscribe(position => {
+    this.susbcriptionMock = this.coordMockService.getCoordsMockEvent(lat, ln, gap).subscribe(position => {
       this.lat = position.lat;
       this.lng = position.ln;
       this.currentMarkerPosition(position.user);
@@ -161,7 +167,7 @@ export class MapPage implements OnInit {
 
   private clientsPositions(): void {
 
-    this.pubsub.getCoordinateEvent().subscribe(c => {
+    this.subscriptionCEvent = this.pubsub.getCoordinateEvent().subscribe(c => {
       this.lat = c.lat;
       this.lng = c.ln;
       if (c.newUser) {
@@ -211,12 +217,21 @@ export class MapPage implements OnInit {
 
   private checkPermissions(): void {
 
-    this.geolocService.checkPermissions().subscribe(status => {
+    this.subscriptionGeoCheck = this.geolocService.checkPermissions().subscribe(status => {
       console.log(status);
       if (status !== 'web' && (status.location !== 'granted' || status.coarseLocation !== 'granted')) {
 
       }
     });
+
+  }
+
+  ngOnDestroy(): void {
+
+    this.subscriptionGeo.unsubscribe();
+    this.susbcriptionMock.unsubscribe();
+    this.subscriptionCEvent.unsubscribe();
+    this.subscriptionGeoCheck.unsubscribe();
 
   }
 
