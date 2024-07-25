@@ -1,0 +1,37 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Coordinate list</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Coordinate list</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+
+  <ion-grid>
+    <ion-row>
+      <ion-button (click)="refresh()">Refresh</ion-button>
+    </ion-row>
+    <ion-row style="color: blue">
+      <ion-col>n</ion-col>
+      <ion-col>Latitude</ion-col>
+      <ion-col>Longitude</ion-col>
+      <ion-col>Date</ion-col>
+      <ion-col>User</ion-col>
+      <ion-col>Group</ion-col>
+    </ion-row>
+    <ion-row *ngFor="let c of coordinates; index as i;">
+      <ion-col style="color: red">{{i}}</ion-col>
+      <ion-col style="color: green">{{c.lat| number: '2.1-7'}}</ion-col>
+      <ion-col style="color: yellow">{{c.ln| number: '2.1-7'}}</ion-col>
+      <ion-col style="color: white">{{c.time | date:'short' }}</ion-col>
+      <ion-col [style]="getCssClient(c.user)">{{c.user}}</ion-col>
+      <ion-col style="color: pink">{{c.group}}</ion-col>
+    </ion-row>
+  </ion-grid>
+
+</ion-content>

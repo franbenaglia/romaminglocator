@@ -1,0 +1,33 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>Login</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Login</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-toast position="top" positionAnchor="header" [isOpen]="showMessage" message="Login fail." [duration]="4000"
+    (didDismiss)="setOpen(false)"></ion-toast>
+
+  <ion-list lines="inset">
+
+    <ion-list-header>
+      <ion-label>Complete:</ion-label>
+    </ion-list-header>
+
+    <ion-item>
+      <ion-button type="button" (click)="googleOauth2()" shape="round" color="medium"
+        size="default">Google&nbsp;<ion-icon name="logo-google"></ion-icon></ion-button>
+      <ion-button type="button" (click)="githubOauth2()" shape="round" color="light"
+        size="default">Github&nbsp;<ion-icon name="logo-github"></ion-icon></ion-button>
+    </ion-item>
+
+  </ion-list>
+
+</ion-content>

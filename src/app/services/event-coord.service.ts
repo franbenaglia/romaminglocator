@@ -13,7 +13,6 @@ export class EventCoordService {
 
   }
 
-
   getCoordsMockEvent(lat?: number, ln?: number, gap?: number): Observable<Coordinate> {
 
     let latitude: number = lat ? lat : 34;
@@ -26,7 +25,7 @@ export class EventCoordService {
       let c: Coordinate = new Coordinate();
 
       c.lat = latitude + diff;
-      c.lng = longitude + diff;
+      c.ln = longitude + diff;
       c.time = new Date();
       c.group = 'room1';
       c.user = 'user1';
@@ -41,11 +40,27 @@ export class EventCoordService {
   }
 
 
+  //called once per client
+  getRandomCoords(clat: number, cln: number, max: number, min: number): Coordinate {
 
+    let cfake: Coordinate = new Coordinate();
+    let plusOrMinus: number = Math.random() < 0.5 ? -1 : 1;
 
+    let klat = Math.random() * (max - min) + min;
+    let kln = Math.random() * (max - min) + min;
 
+    let latitude: number = clat + plusOrMinus * klat;
+    let longitude: number = cln + plusOrMinus * kln;
 
+    cfake.ln = longitude;
+    cfake.lat = latitude;
 
+    return cfake;
+  }
 
+  //called once per client
+  getGap(max: number, min: number): number {
+    return Math.random() * (max - min) + min;
+  }
 
 }

@@ -3,5 +3,6 @@ export const environment = {
   resourceserver: 'http://localhost:3001',
   wsserver: 'http://localhost:3010',
   localserver: 'http://localhost:8100',
-  period: 5000
+  period: 5000,
+  ncoordsaverage: 4
 };

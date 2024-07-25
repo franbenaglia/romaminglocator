@@ -7,6 +7,10 @@ import { Platform } from '../model/Platform';
 import { Coordinate } from '../model/Coordinate';
 import { GpslocatorService } from '../services/gpslocator.service';
 import { EventCoordService } from '../services/event-coord.service';
+import { PubsubService } from '../services/pubsub.service';
+import { AuthService } from '../services/auth.service';
+import { User } from '../model/User';
+import { StatsService } from '../services/stats.service';
 
 @Component({
   selector: 'app-map',
@@ -17,14 +21,25 @@ import { EventCoordService } from '../services/event-coord.service';
 })
 export class MapPage implements OnInit {
 
-  constructor(private geolocService: GpslocatorService, private coordMockService: EventCoordService) { }
+  constructor(private stats: StatsService, private auth: AuthService, private pubsub: PubsubService, private geolocService: GpslocatorService, private coordMockService: EventCoordService) { }
 
-  platform: Platform;
-  positioncoords: string = '';
+  private clientColor: Map<string, string> = new Map<string, string>();
+
+  private iconColorCount: Map<string, number> = new Map<string, number>();
+
+  private availableColors: string[] = ['red', 'black', 'blue'];
 
   ngOnInit() {
+
+    this.initializeIconColor();
     //this.checkPermissions();
     this.position();
+  }
+
+  private initializeIconColor() {
+    for (let c of this.availableColors) {
+      this.iconColorCount.set(c, 0)
+    }
   }
 
   leafletMap: any;
@@ -39,33 +54,32 @@ export class MapPage implements OnInit {
 
   coordinate: Coordinate;
 
-  private iconMark = L.icon({
-    iconUrl: 'assets/icon/marker.png',
-    iconSize: [30, 40]
-  });
-
-  private iconCurrentPosition = L.icon({
-    iconUrl: 'assets/icon/redmark.png',
-    iconSize: [40, 50]
-  });
-
   private position(): void {
 
     this.geolocService.getCurrentPosition().subscribe(position => {
+
       this.lat = position.coords.latitude;
       this.lng = position.coords.longitude;
+
       this.loadLeafletMap();
-      //this.mockPosition(this.lat, this.lng, 0.05);
+
+      this.mockPosition(this.lat, this.lng, 0.005);
+
+      this.clientsPositions();
+
     });
   }
 
   private mockPosition(lat?: number, ln?: number, gap?: number): void {
-
+    //let gap: number = this.coordMockService.getGap(0.0025, 0.0009);
+    //let c : Coordinate = this.coordMockService.getRandomCoords(lat,ln, max, min); // c.lat, c.ln
     this.coordMockService.getCoordsMockEvent(lat, ln, gap).subscribe(position => {
       this.lat = position.lat;
-      this.lng = position.lng;
-      this.currentMarkerPosition();
-      //this.leafletMap.setView([this.lat, this.lng], this.zoom);
+      this.lng = position.ln;
+      this.currentMarkerPosition(position.user);
+      this.pubsub.sendCoordinate(Coordinate.coordinateBuilder(position.lat, position.ln, position.time, undefined, position.group));
+      //let center: Coordinate = this.stats.mapCenter(); c.lat, c.lng
+      this.leafletMap.setView([this.lat, this.lng], this.zoom);
     });
   }
 
@@ -92,41 +106,16 @@ export class MapPage implements OnInit {
 
     this.configMap();
 
-    this.currentMarkerPosition();
-
-    this.handlers();
+    this.currentMarkerPosition(this.auth.getUser().name);
 
   }
 
+  private currentMarkerPosition(user: string): void {
 
-  private currentMarkerPosition(): void {
-
-    let marker = L.marker([this.lat, this.lng], { icon: this.iconCurrentPosition }).addTo(this.leafletMap)
-    let coordinate: Coordinate = new Coordinate();
-    coordinate.lat = this.lat;
-    coordinate.lng = this.lng;
-    marker.addEventListener('click', () => {
-      this.coordinate = coordinate;
-    });
-  }
-
-  private handlers(): void {
-
-    const self = this;
-
-    function onMapDoubleClick(e) {
-      let mark = L.marker([e.latlng.lat, e.latlng.lng], { icon: self.iconMark }).addTo(self.leafletMap);
-      let coordinate: Coordinate = new Coordinate();
-      coordinate.lat = e.latlng.lat;
-      coordinate.lng = e.latlng.lng;
-      mark.addEventListener('click', () => {
-        self.coordinate = coordinate;
-      });
-    }
-
-    this.leafletMap.on('dblclick', onMapDoubleClick);
+    L.marker([this.lat, this.lng], { icon: this.iconCurrentPosition(user) }).addTo(this.leafletMap)
 
   }
+
 
   private configMap(): void {
 
@@ -166,10 +155,58 @@ export class MapPage implements OnInit {
       })
     };
 
-    let layerControl = L.control.layers(baseMaps).addTo(this.leafletMap);
+    L.control.layers(baseMaps).addTo(this.leafletMap);
 
-    //baseMaps.Topography.addTo(this.leafletMap);
+  }
 
+  private clientsPositions(): void {
+
+    this.pubsub.getCoordinateEvent().subscribe(c => {
+      this.lat = c.lat;
+      this.lng = c.ln;
+      if (c.newUser) {
+        this.assignColorToClient();
+      }
+      this.currentMarkerPosition(c.user);
+    });
+
+  }
+
+  private iconCurrentPosition = (user: string) => {
+    return L.icon({
+      iconUrl: this.getIconUrl(user),
+      iconSize: [40, 50]
+    });
+  }
+
+  private getIconUrl(user: string): string {
+
+    let color = this.clientColor.get(user);
+    return 'assets/icon/' + color + '.png';
+  }
+
+  private assignColorToClient(): void {
+    for (let c of this.pubsub.getIdClients()) {  //TODO WATCH IF getIdClients COULD BE PROBLEMATIC, PERHAPS MUST BE IN THE COORDEVENT
+      if (!this.clientColor.has(c)) {
+        let luc = this.lessUsedColor();
+        this.clientColor.set(c, luc);
+        this.iconColorCount.set(luc, this.iconColorCount.get(luc) + 1);
+      }
+    }
+  }
+
+  private lessUsedColor(): string {
+
+    let color: string;
+    let arrayVal: number[] = Array.from(this.iconColorCount.values());
+    let minor: number = Math.min(...arrayVal);
+
+    this.iconColorCount.forEach((value, key, map) => {
+      if (value === minor) {
+        color = key;
+      }
+    })
+    return color;
   }
 
   private checkPermissions(): void {
