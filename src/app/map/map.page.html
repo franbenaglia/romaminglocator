@@ -10,5 +10,12 @@
       <ion-title size="large">map</ion-title>
     </ion-toolbar>
   </ion-header>
+ 
+  <ion-fab slot="fixed" horizontal="center">
+    <ion-toggle [checked]="true" (click)="toggleCenter()">Auto Center</ion-toggle>
+    <!--ion-fab-button (click)="toggleCenter()">
+      <ion-icon name="toggle"></ion-icon>
+    </ion-fab-button-->
+  </ion-fab>
   <div id='leafletMap'></div>
 </ion-content>

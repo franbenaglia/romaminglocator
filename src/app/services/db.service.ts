@@ -18,4 +18,13 @@ export class DbService {
   getAll(): Observable<Coordinate[]> {
     return this.http.get<Coordinate[]>(this.baseURL + 'all');
   }
+
+  deleteAll(): Observable<any> {
+    return this.http.delete<any>(this.baseURL + 'deleteAll');
+  }
+
+  getByUser(user: string): Observable<Coordinate[]> {
+    return this.http.get<Coordinate[]>(this.baseURL + 'byuser/' + user);
+  }
+
 }

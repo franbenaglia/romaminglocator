@@ -1,34 +1,41 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonSpinner, IonPopover, IonInput, IonToast } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonSpinner, IonPopover, IonInput, IonToast, IonFab, IonFabButton, IonIcon, IonToggle } from '@ionic/angular/standalone';
 import * as L from 'leaflet';
-import { Platform } from '../model/Platform';
 import { Coordinate } from '../model/Coordinate';
 import { GpslocatorService } from '../services/gpslocator.service';
 import { EventCoordService } from '../services/event-coord.service';
 import { PubsubService } from '../services/pubsub.service';
 import { AuthService } from '../services/auth.service';
-import { User } from '../model/User';
 import { StatsService } from '../services/stats.service';
 import { Subscription } from 'rxjs';
+import { environment } from 'src/environments/environment';
+import { addIcons } from 'ionicons';
+import { add, toggle } from 'ionicons/icons';
 
 @Component({
   selector: 'app-map',
   templateUrl: './map.page.html',
   styleUrls: ['./map.page.scss'],
   standalone: true,
-  imports: [IonToast, IonInput, IonPopover, IonSpinner, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
+  imports: [IonToggle, IonIcon, IonFabButton, IonFab, IonToast, IonInput, IonPopover, IonSpinner, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
 export class MapPage implements OnInit, OnDestroy {
 
-  constructor(private stats: StatsService, private auth: AuthService, private pubsub: PubsubService, private geolocService: GpslocatorService, private coordMockService: EventCoordService) { }
+  constructor(private stats: StatsService, private auth: AuthService, private pubsub: PubsubService, private geolocService: GpslocatorService, private coordMockService: EventCoordService) {
+    addIcons({ add, toggle });
+  }
 
   private clientColor: Map<string, string> = new Map<string, string>();
 
   private iconColorCount: Map<string, number> = new Map<string, number>();
 
   private availableColors: string[] = ['red', 'black', 'blue'];
+
+  private ncoordsaverage: number = environment.ncoordsaverage
+
+  private enableCenter: boolean = true;
 
   subscriptionGeo: Subscription;
   susbcriptionMock: Subscription;
@@ -67,6 +74,8 @@ export class MapPage implements OnInit, OnDestroy {
       this.lat = position.coords.latitude;
       this.lng = position.coords.longitude;
 
+      this.assignColorToLocalClient();
+
       this.loadLeafletMap();
 
       this.mockPosition(this.lat, this.lng, 0.005);
@@ -76,17 +85,25 @@ export class MapPage implements OnInit, OnDestroy {
     });
   }
 
-  private mockPosition(lat?: number, ln?: number, gap?: number): void {
-    //let gap: number = this.coordMockService.getGap(0.0025, 0.0009);
-    //let c : Coordinate = this.coordMockService.getRandomCoords(lat,ln, max, min); // c.lat, c.ln
-    this.susbcriptionMock = this.coordMockService.getCoordsMockEvent(lat, ln, gap).subscribe(position => {
+  private mockPosition(lat?: number, ln?: number, _gap?: number): void {
+    let gap: number = this.coordMockService.getGap(0.005, 0.0005);
+    let c: Coordinate = this.coordMockService.getRandomCoords(lat, ln, 0.005, 0.0005); // c.lat, c.ln
+    this.susbcriptionMock = this.coordMockService.getCoordsMockEvent(c.lat, c.ln, gap).subscribe(position => {
       this.lat = position.lat;
       this.lng = position.ln;
-      this.currentMarkerPosition(position.user);
-      this.pubsub.sendCoordinate(Coordinate.coordinateBuilder(position.lat, position.ln, position.time, undefined, position.group));
-      //let center: Coordinate = this.stats.mapCenter(); c.lat, c.lng
-      this.leafletMap.setView([this.lat, this.lng], this.zoom);
+      let co: Coordinate = Coordinate.coordinateBuilder(position.lat, position.ln, position.time, this.auth.getUser().name, position.group);
+      this.stats.addCoordinates(co, this.ncoordsaverage);
+      this.currentMarkerPosition(this.auth.getUser().name);
+      this.pubsub.sendCoordinate(co);
+      if (this.enableCenter) {
+        let center: Coordinate = this.stats.mapCenter();
+        this.leafletMap.setView([center.lat, center.ln], this.zoom);
+      }
     });
+  }
+
+  toggleCenter() {
+    this.enableCenter = !this.enableCenter;
   }
 
   private loadLeafletMap(): void {
@@ -112,7 +129,9 @@ export class MapPage implements OnInit, OnDestroy {
 
     this.configMap();
 
-    this.currentMarkerPosition(this.auth.getUser().name);
+    //TODO VERSION DE PRUEBA CON DISP REAL SE DEBE DESCOMENTAR LAS 2 LINEAS y VER COMO ACTUALIZAR CAMBIOS DE POSICION
+    //this.pubsub.sendCoordinate(Coordinate.coordinateBuilder(position.lat, position.ln, position.time, this.auth.getUser().name, position.group));
+    //this.currentMarkerPosition(this.auth.getUser().name);
 
   }
 
@@ -168,12 +187,14 @@ export class MapPage implements OnInit, OnDestroy {
   private clientsPositions(): void {
 
     this.subscriptionCEvent = this.pubsub.getCoordinateEvent().subscribe(c => {
-      this.lat = c.lat;
-      this.lng = c.ln;
-      if (c.newUser) {
-        this.assignColorToClient();
+      if (c) {
+        this.lat = c.lat;
+        this.lng = c.ln;
+        if (c.newUser) {
+          this.assignColorToClient();
+        }
+        this.currentMarkerPosition(c.user);
       }
-      this.currentMarkerPosition(c.user);
     });
 
   }
@@ -189,6 +210,10 @@ export class MapPage implements OnInit, OnDestroy {
 
     let color = this.clientColor.get(user);
     return 'assets/icon/' + color + '.png';
+  }
+
+  private assignColorToLocalClient(): void {
+    this.clientColor.set(this.auth.getUser().name, 'red');
   }
 
   private assignColorToClient(): void {
@@ -227,12 +252,18 @@ export class MapPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-
-    this.subscriptionGeo.unsubscribe();
-    this.susbcriptionMock.unsubscribe();
-    this.subscriptionCEvent.unsubscribe();
-    this.subscriptionGeoCheck.unsubscribe();
-
+    if (this.subscriptionGeo) {
+      this.subscriptionGeo.unsubscribe();
+    }
+    if (this.susbcriptionMock) {
+      this.susbcriptionMock.unsubscribe();
+    }
+    if (this.subscriptionCEvent) {
+      this.subscriptionCEvent.unsubscribe();
+    }
+    if (this.subscriptionGeoCheck) {
+      this.subscriptionGeoCheck.unsubscribe();
+    }
   }
 
 }

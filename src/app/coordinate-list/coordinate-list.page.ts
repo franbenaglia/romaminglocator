@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonItem, IonList, IonListHeader, IonCol, IonGrid, IonRow, IonButton } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonItem, IonList, IonListHeader, IonCol, IonGrid, IonRow, IonButton, IonInput } from '@ionic/angular/standalone';
 import { DbService } from '../services/db.service';
 import { Coordinate } from '../model/Coordinate';
 
@@ -10,11 +10,13 @@ import { Coordinate } from '../model/Coordinate';
   templateUrl: './coordinate-list.page.html',
   styleUrls: ['./coordinate-list.page.scss'],
   standalone: true,
-  imports: [IonButton, IonRow, IonGrid, IonCol, IonListHeader, IonList, IonItem, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
+  imports: [IonInput, IonButton, IonRow, IonGrid, IonCol, IonListHeader, IonList, IonItem, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
 export class CoordinateListPage implements OnInit {
 
   constructor(private db: DbService) { }
+
+  user: string;
 
   coordinates: Coordinate[] = [];
 
@@ -30,9 +32,10 @@ export class CoordinateListPage implements OnInit {
     this.db.getAll().subscribe(cs => {
       this.coordinates.push(...cs);
       this.idClients = new Set(this.coordinates.map(cs => cs.user));
+      this.initializeCss();
     });
 
-    this.initializeCss();
+
   }
 
   private initializeCss(): void {
@@ -83,6 +86,21 @@ export class CoordinateListPage implements OnInit {
   refresh() {
     this.coordinates.length = 0;
     this.db.getAll().subscribe(cs => this.coordinates.push(...cs));
+    this.initializeCss();
+  }
+
+  deleteAll() {
+    this.db.deleteAll().subscribe(
+      (cs: any) => {
+        console.log(cs);
+        this.coordinates.length = 0;
+      }
+    );
+  }
+
+  getByUser() {
+    this.coordinates.length = 0;
+    this.db.getByUser(this.user).subscribe(cs => this.coordinates.push(...cs));
     this.initializeCss();
   }
 

@@ -14,11 +14,16 @@ export class StatsService {
 
   //push coordinates all users, max n for user
   addCoordinates(c: Coordinate, n: number): void {
+    let cs: Array<Coordinate>;
+    if (this.coordinates.has(c.user)) {
+      cs = this.coordinates.get(c.user);
+      cs.push(c);
+      if (cs.length > n) {
+        cs.shift();
+      }
 
-    let cs = this.coordinates.get(c.user);
-    cs.push(c);
-    if (cs.length > n) {
-      cs.shift();
+    } else {
+      this.coordinates.set(c.user, [c]);
     }
 
   }
@@ -43,7 +48,7 @@ export class StatsService {
 
     for (let cs of this.avcoordinates) {
       sumlats = sumlats + cs.lat;
-      sumlns = sumlats + cs.ln;
+      sumlns = sumlns + cs.ln;
     }
 
     c.lat = sumlats / size;

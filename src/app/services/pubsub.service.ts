@@ -91,8 +91,8 @@ export class PubsubService {
   }
 
   sendCoordinate(coordinate: Coordinate): void {
-    let user: User = this.authService.getUser();
-    coordinate.user = user.name;
+    //let user: User = this.authService.getUser();
+    //coordinate.user = user.name;
     this.socket.emit("coordinate", coordinate, (response: any) => {
       console.log(response);
     });

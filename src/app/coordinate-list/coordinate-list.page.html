@@ -15,6 +15,9 @@
   <ion-grid>
     <ion-row>
       <ion-button (click)="refresh()">Refresh</ion-button>
+      <ion-button (click)="deleteAll()">Delete All</ion-button>
+      <ion-button (click)="getByUser()">By user</ion-button>
+      <ion-input [(ngModel)]="user" label="Enter user" placeholder="Enter user"></ion-input>
     </ion-row>
     <ion-row style="color: blue">
       <ion-col>n</ion-col>
