@@ -10,12 +10,17 @@
       <ion-title size="large">map</ion-title>
     </ion-toolbar>
   </ion-header>
- 
-  <ion-fab slot="fixed" horizontal="center">
+
+  <ion-fab slot="fixed" vertical="top" horizontal="start">
     <ion-toggle [checked]="true" (click)="toggleCenter()">Auto Center</ion-toggle>
-    <!--ion-fab-button (click)="toggleCenter()">
-      <ion-icon name="toggle"></ion-icon>
-    </ion-fab-button-->
+  </ion-fab>
+  <ion-fab slot="fixed" vertical="top" horizontal="center">
+    <ion-toggle   color="warning"  [checked]="false" (click)="enableSave()">Enable saving</ion-toggle>
+  </ion-fab>
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="clearMarks()">
+      <ion-icon name="trash-outline"></ion-icon>
+    </ion-fab-button>
   </ion-fab>
   <div id='leafletMap'></div>
 </ion-content>

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonItem, IonList, IonListHeader, IonCol, IonGrid, IonRow, IonButton, IonInput } from '@ionic/angular/standalone';
+import { IonContent, IonHeader, IonTitle, IonToolbar, IonLabel, IonItem, IonList, IonListHeader, IonCol, IonGrid, IonRow, IonButton, IonInput, IonToggle } from '@ionic/angular/standalone';
 import { DbService } from '../services/db.service';
 import { Coordinate } from '../model/Coordinate';
 
@@ -10,9 +10,10 @@ import { Coordinate } from '../model/Coordinate';
   templateUrl: './coordinate-list.page.html',
   styleUrls: ['./coordinate-list.page.scss'],
   standalone: true,
-  imports: [IonInput, IonButton, IonRow, IonGrid, IonCol, IonListHeader, IonList, IonItem, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
+  imports: [IonToggle, IonInput, IonButton, IonRow, IonGrid, IonCol, IonListHeader, IonList, IonItem, IonLabel, IonContent, IonHeader, IonTitle, IonToolbar, CommonModule, FormsModule]
 })
 export class CoordinateListPage implements OnInit {
+
 
   constructor(private db: DbService) { }
 
@@ -104,5 +105,6 @@ export class CoordinateListPage implements OnInit {
     this.initializeCss();
   }
 
-
 }
+
+

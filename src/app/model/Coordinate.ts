@@ -7,9 +7,10 @@ export class Coordinate {
     ln: number;
     user: string;
     time: Date;
-    group: string;
+    group: String;
+    save: boolean = true;
 
-    static coordinateBuilder(lat: number, lng: number, time?: Date, user?: string, group?: string): Coordinate {
+    static coordinateBuilder(lat: number, lng: number, time?: Date, user?: string, group?: String, save?: boolean): Coordinate {
 
         let coordinate: Coordinate = new Coordinate();
 
@@ -18,6 +19,7 @@ export class Coordinate {
         coordinate.user = user;
         coordinate.time = time;
         coordinate.group = group;
+        coordinate.save = save;
 
         return coordinate;
     }

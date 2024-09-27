@@ -19,7 +19,17 @@ export class AuthService {
     let user: User = new User();
     user.name = userName;
     user.token = token;
+    user.room = 'room1';
     this.user = user;
+  }
+
+  setRoom(room: string) {
+    this.user.room = room;
+  }
+
+
+  getRoom(): String {
+    return this.user.room;
   }
 
   getUser(): User {

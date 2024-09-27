@@ -56,7 +56,7 @@ export class PubsubService {
       console.log('receiving coordinates from server included me: ' + JSON.stringify(c));
     });
 
-    this.socket.on('coordinateallwithoutme', (c: CoordinateEvent) => {
+    this.socket.on(this.authService.getRoom().toString(), (c: CoordinateEvent) => { //'coordinateallwithoutme'
       console.log('receiving coordinates from server whitout me: ' + JSON.stringify(c));
       this.stats.addCoordinates(c, this.ncoordsaverage);
       let newClient = false;
@@ -91,8 +91,6 @@ export class PubsubService {
   }
 
   sendCoordinate(coordinate: Coordinate): void {
-    //let user: User = this.authService.getUser();
-    //coordinate.user = user.name;
     this.socket.emit("coordinate", coordinate, (response: any) => {
       console.log(response);
     });

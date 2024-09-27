@@ -18,9 +18,8 @@ import { CookieService } from 'ngx-cookie-service';
 export class AppComponent {
   public appPages = [
     { title: 'Map', url: '/folder/map', icon: 'paper-plane' },
-    //{ title: 'Test', url: '/folder/test', icon: 'paper-plane' },
     { title: 'Coordinates', url: 'folder/coordinate-list', icon: 'paper-plane' },
-    //{ title: 'Login', url: 'folder/login', icon: 'paper-plane' },
+    { title: 'Room-Users', url: 'folder/room', icon: 'paper-plane' },
     { title: 'Logout', url: 'folder/logout', icon: 'paper-plane' },
 
   ];

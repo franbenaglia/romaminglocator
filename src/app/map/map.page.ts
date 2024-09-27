@@ -12,7 +12,8 @@ import { StatsService } from '../services/stats.service';
 import { Subscription } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { addIcons } from 'ionicons';
-import { add, toggle } from 'ionicons/icons';
+import { add, toggle, cut, trashOutline } from 'ionicons/icons';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-map',
@@ -24,7 +25,7 @@ import { add, toggle } from 'ionicons/icons';
 export class MapPage implements OnInit, OnDestroy {
 
   constructor(private stats: StatsService, private auth: AuthService, private pubsub: PubsubService, private geolocService: GpslocatorService, private coordMockService: EventCoordService) {
-    addIcons({ add, toggle });
+    addIcons({ add, toggle, cut, trashOutline });
   }
 
   private clientColor: Map<string, string> = new Map<string, string>();
@@ -36,6 +37,10 @@ export class MapPage implements OnInit, OnDestroy {
   private ncoordsaverage: number = environment.ncoordsaverage
 
   private enableCenter: boolean = true;
+
+  private layerGroup = L.layerGroup();
+
+  private save: boolean = false;
 
   subscriptionGeo: Subscription;
   susbcriptionMock: Subscription;
@@ -68,8 +73,9 @@ export class MapPage implements OnInit, OnDestroy {
   coordinate: Coordinate;
 
   private position(): void {
-
-    this.subscriptionGeo = this.geolocService.getCurrentPosition().subscribe(position => {
+    //test on device
+    //this.subscriptionGeo = this.geolocService.getRoamingPosition().subscribe(position => {
+    this.subscriptionGeo = this.geolocService.getCurrentStaticPosition().subscribe(position => {
 
       this.lat = position.coords.latitude;
       this.lng = position.coords.longitude;
@@ -78,7 +84,11 @@ export class MapPage implements OnInit, OnDestroy {
 
       this.loadLeafletMap();
 
-      this.mockPosition(this.lat, this.lng, 0.005);
+      if (!Capacitor.isNativePlatform()) {
+        this.mockPosition(this.lat, this.lng, 0.005);
+      } else {
+        this.currentMarkerPosition(this.auth.getUser().name);
+      }
 
       this.clientsPositions();
 
@@ -91,14 +101,11 @@ export class MapPage implements OnInit, OnDestroy {
     this.susbcriptionMock = this.coordMockService.getCoordsMockEvent(c.lat, c.ln, gap).subscribe(position => {
       this.lat = position.lat;
       this.lng = position.ln;
-      let co: Coordinate = Coordinate.coordinateBuilder(position.lat, position.ln, position.time, this.auth.getUser().name, position.group);
+      let co: Coordinate = Coordinate.coordinateBuilder(position.lat, position.ln, position.time, this.auth.getUser().name, this.auth.getRoom());
       this.stats.addCoordinates(co, this.ncoordsaverage);
       this.currentMarkerPosition(this.auth.getUser().name);
+      co.save = this.save;
       this.pubsub.sendCoordinate(co);
-      if (this.enableCenter) {
-        let center: Coordinate = this.stats.mapCenter();
-        this.leafletMap.setView([center.lat, center.ln], this.zoom);
-      }
     });
   }
 
@@ -106,11 +113,17 @@ export class MapPage implements OnInit, OnDestroy {
     this.enableCenter = !this.enableCenter;
   }
 
+  enableSave() {
+    this.save = !this.save;
+  }
+
   private loadLeafletMap(): void {
 
     this.spin = true;
 
     this.leafletMap = new L.Map('leafletMap');
+
+    this.layerGroup.addTo(this.leafletMap);
 
     const self = this;
 
@@ -137,7 +150,11 @@ export class MapPage implements OnInit, OnDestroy {
 
   private currentMarkerPosition(user: string): void {
 
-    L.marker([this.lat, this.lng], { icon: this.iconCurrentPosition(user) }).addTo(this.leafletMap)
+    L.marker([this.lat, this.lng], { icon: this.iconCurrentPosition(user) }).addTo(this.layerGroup); //this.leafletMap
+    if (this.enableCenter) {
+      let center: Coordinate = this.stats.mapCenter();
+      this.leafletMap.setView([center.lat, center.ln], this.zoom);
+    }
 
   }
 
@@ -201,7 +218,7 @@ export class MapPage implements OnInit, OnDestroy {
 
   private iconCurrentPosition = (user: string) => {
     return L.icon({
-      iconUrl: this.getIconUrl(user),
+      iconUrl: this.getIconUrl(user) ? this.getIconUrl(user) : 'black',
       iconSize: [40, 50]
     });
   }
@@ -249,6 +266,10 @@ export class MapPage implements OnInit, OnDestroy {
       }
     });
 
+  }
+
+  clearMarks() {
+    this.layerGroup.clearLayers();
   }
 
   ngOnDestroy(): void {

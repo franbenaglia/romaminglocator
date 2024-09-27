@@ -19,13 +19,15 @@ export class EventCoordService {
     let longitude: number = ln ? ln : -57;
     let skip: number = gap ? gap : 0.5;
     let diff: number = 0;
+    let plusOrMinusLat: number = Math.random() < 0.5 ? -1 : 1;
+    let plusOrMinusLn: number = Math.random() < 0.5 ? -1 : 1;
 
     let sourceCoords = defer(() => {
 
       let c: Coordinate = new Coordinate();
 
-      c.lat = latitude + diff;
-      c.ln = longitude + diff;
+      c.lat = latitude + (diff * plusOrMinusLat);
+      c.ln = longitude + (diff * plusOrMinusLn);
       c.time = new Date();
       c.group = 'room1';
       c.user = 'user1';

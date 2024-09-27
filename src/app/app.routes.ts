@@ -3,8 +3,12 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'folder/map',
+    redirectTo: 'folder/room',
     pathMatch: 'full',
+  },
+  {
+    path: 'folder/room',
+    loadComponent: () => import('./room/room.page').then( m => m.RoomPage)
   },
   {
     path: 'folder/map',
@@ -33,5 +37,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./folder/folder.page').then((m) => m.FolderPage),
   },
+ 
 
 ];

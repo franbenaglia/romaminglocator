@@ -1,0 +1,36 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-title>room</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">room</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <ion-grid>
+    <ion-row>
+      <ion-select (ionChange)="setRoom($event)" label="Select your room" placeholder="Select your Room">
+        <ion-select-option value="room1">Room 1</ion-select-option>
+        <ion-select-option value="room2">Room 2</ion-select-option>
+        <ion-select-option value="room3">Room 3</ion-select-option>
+      </ion-select>
+    </ion-row>
+    <ion-row style="color: blue">
+      <ion-col>n</ion-col>
+      <ion-col>User</ion-col>
+      <ion-col>Room</ion-col>
+    </ion-row>
+    <ion-row *ngFor="let r of rooms; index as i;">
+      <ion-col style="color: red">{{i}}</ion-col>
+      <ion-col style="color: green">{{r.name}}</ion-col>
+      <ion-col style="color: yellow">{{r.room}}</ion-col>
+    </ion-row>
+  </ion-grid>
+
+
+
+</ion-content>
