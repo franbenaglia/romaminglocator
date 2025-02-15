@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, NgZone } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { IonMenuButton, IonApp, IonSplitPane, IonMenu, IonContent, IonList, IonListHeader, IonNote, IonMenuToggle, IonItem, IonIcon, IonLabel, IonRouterOutlet, IonRouterLink, IonHeader, IonButtons } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -7,6 +7,8 @@ import { paperPlaneOutline, paperPlaneSharp } from 'ionicons/icons';
 import { User } from './model/User';
 import { AuthService } from './services/auth.service';
 import { CookieService } from 'ngx-cookie-service';
+import { App, URLOpenListenerEvent } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +25,7 @@ export class AppComponent {
     { title: 'Logout', url: 'folder/logout', icon: 'paper-plane' },
 
   ];
-  constructor(private cookieService: CookieService, private authService: AuthService, private router: Router) {
+  constructor(private cookieService: CookieService, private authService: AuthService, private router: Router, private zone: NgZone) {
     addIcons({ paperPlaneOutline, paperPlaneSharp });
   }
 
@@ -33,15 +35,27 @@ export class AppComponent {
 
   ngOnInit() {
 
-    let token: string = this.cookieService.get('token');
-    let userName: string = this.cookieService.get('username');
+    if (!Capacitor.isNativePlatform()) {
+
+      let token: string = this.cookieService.get('token');
+      let userName: string = this.cookieService.get('username');
 
 
-    if (token) {
-      this.authService.setLogin(true)
-      this.authService.setUser(userName, token);
-      this.user.name = userName;
-      this.user.token = token;
+      if (token) {
+        this.authService.setLogin(true)
+        this.authService.setUser(userName, token);
+        this.user.name = userName;
+        this.user.token = token;
+      }
+
+      if (!this.authService.isLoggedIn()) {
+        this.showMenu = false;
+        this.router.navigate((['login']));
+      } else {
+        this.showMenu = true;
+      }
+    } else {
+      this.initializeApp();
     }
 
     if (!this.authService.isLoggedIn()) {
@@ -52,5 +66,29 @@ export class AppComponent {
     }
 
   }
+
+
+  initializeApp() {
+    App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
+      this.zone.run(() => {
+        const url = event.url;
+        const ext = url.split(".app/").pop();
+        const us = url.split(".user/").pop();
+        const user = us.split('.').shift();
+
+        if (ext) {
+          console.log('token as url ' + ext);
+          this.authService.setLogin(true)
+          this.authService.setUser(user, ext);
+          this.user.name = user;
+          this.user.token = ext;
+          this.showMenu = true;
+          this.router.navigate((['folder/landingpage']));
+        }
+
+      });
+    });
+  }
+
 
 }

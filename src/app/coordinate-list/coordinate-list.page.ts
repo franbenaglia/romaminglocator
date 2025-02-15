@@ -35,8 +35,6 @@ export class CoordinateListPage implements OnInit {
       this.idClients = new Set(this.coordinates.map(cs => cs.user));
       this.initializeCss();
     });
-
-
   }
 
   private initializeCss(): void {

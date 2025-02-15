@@ -84,11 +84,11 @@ export class MapPage implements OnInit, OnDestroy {
 
       this.loadLeafletMap();
 
-      if (!Capacitor.isNativePlatform()) {
+      //if (!Capacitor.isNativePlatform()) {
         this.mockPosition(this.lat, this.lng, 0.005);
-      } else {
-        this.currentMarkerPosition(this.auth.getUser().name);
-      }
+      //} else {
+      //  this.currentMarkerPosition(this.auth.getUser().name);
+      //}
 
       this.clientsPositions();
 
